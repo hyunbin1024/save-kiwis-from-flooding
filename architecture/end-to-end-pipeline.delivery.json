@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3cb5adde-34c0-4cd0-ab4b-52a69798c996",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/Users/hyunbinko/Documents/GEOG 761 Project/.archify/dataflow-end-to-end-20261016-031044/candidate.json",
+  "output": "/Users/hyunbinko/Documents/GEOG 761 Project/.archify/dataflow-end-to-end-20261016-031044/end-to-end-pipeline.html",
+  "specification": {
+    "sha256": "f3695e95508a78b2712fb3c39b95942d1168edaecb11940f64b8291c462876f0",
+    "bytes": 7339
+  },
+  "artifact": {
+    "sha256": "77efbb342c7732ce8050a2e0d396e98896e043b2e38404817bed0a614f2f7a84",
+    "bytes": 768766
+  }
+}
