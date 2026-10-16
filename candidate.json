@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Northland Flood Mapping: End-to-End Pipeline",
+    "output": ".archify/dataflow-end-to-end-20261016-031044/end-to-end-pipeline.html",
+    "viewBox": [
+      1085,
+      700
+    ],
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    {
+      "label": "Sources"
+    },
+    {
+      "label": "Prepare"
+    },
+    {
+      "label": "Train & evaluate"
+    },
+    {
+      "label": "Map Northland"
+    },
+    {
+      "label": "Outputs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "wcl",
+      "type": "database",
+      "label": "WorldCover",
+      "sublabel": "water labels, 10 m",
+      "stage": 0,
+      "row": 0,
+      "width": 120,
+      "height": 40,
+      "tag": "labels"
+    },
+    {
+      "id": "s1",
+      "type": "cloud",
+      "label": "Sentinel-1 SAR",
+      "sublabel": "GEE, 14 Feb 2023",
+      "stage": 0,
+      "row": 1,
+      "width": 120,
+      "height": 40,
+      "tag": "GEE"
+    },
+    {
+      "id": "polys",
+      "type": "database",
+      "label": "Flood polygons",
+      "sublabel": "external, AOIs 01-07",
+      "stage": 0,
+      "row": 2,
+      "width": 120,
+      "height": 40,
+      "tag": "flood only"
+    },
+    {
+      "id": "hand",
+      "type": "database",
+      "label": "MERIT HAND",
+      "sublabel": "height above drainage",
+      "stage": 0,
+      "row": 3,
+      "width": 120,
+      "height": 40
+    },
+    {
+      "id": "perm",
+      "type": "database",
+      "label": "WorldCover + JRC",
+      "sublabel": "permanent water mask",
+      "stage": 0,
+      "row": 4,
+      "width": 120,
+      "height": 40
+    },
+    {
+      "id": "feat",
+      "type": "backend",
+      "label": "SAR features",
+      "sublabel": "VV, VH, change",
+      "stage": 1,
+      "row": 1,
+      "width": 120,
+      "height": 40
+    },
+    {
+      "id": "samples",
+      "type": "backend",
+      "label": "Labelled pixels",
+      "sublabel": "HAND<10 m, 40 m edge",
+      "stage": 1,
+      "row": 3,
+      "width": 120,
+      "height": 40,
+      "tag": "split by AOI"
+    },
+    {
+      "id": "base",
+      "type": "backend",
+      "label": "Baselines",
+      "sublabel": "RF (trained) + Otsu",
+      "stage": 2,
+      "row": 0,
+      "width": 120,
+      "height": 40,
+      "tag": "no polygons"
+    },
+    {
+      "id": "eval",
+      "type": "backend",
+      "label": "Test scoring",
+      "sublabel": "AOIs 03, 04: F1, PR",
+      "stage": 2,
+      "row": 2,
+      "width": 120,
+      "height": 40,
+      "tag": "held out"
+    },
+    {
+      "id": "tune",
+      "type": "backend",
+      "label": "Tune Random Forest",
+      "sublabel": "bands, trees, cutoff",
+      "stage": 2,
+      "row": 3,
+      "width": 120,
+      "height": 40,
+      "tag": "valid AOI 07"
+    },
+    {
+      "id": "ee",
+      "type": "cloud",
+      "label": "Earth Engine RF",
+      "sublabel": "30 m flood raster",
+      "stage": 3,
+      "row": 3,
+      "width": 120,
+      "height": 40,
+      "tag": "ML model"
+    },
+    {
+      "id": "dpa",
+      "type": "backend",
+      "label": "Depth + attributes",
+      "sublabel": "LINZ DEM, WorldPop, LINZ",
+      "stage": 3,
+      "row": 4,
+      "width": 120,
+      "height": 40
+    },
+    {
+      "id": "report",
+      "type": "database",
+      "label": "Accuracy report",
+      "sublabel": "RF vs baselines",
+      "stage": 4,
+      "row": 2,
+      "width": 120,
+      "height": 40
+    },
+    {
+      "id": "map",
+      "type": "frontend",
+      "label": "Flood map",
+      "sublabel": "HTML, pop-ups",
+      "stage": 4,
+      "row": 4,
+      "width": 120,
+      "height": 40,
+      "tag": "asset"
+    }
+  ],
+  "flows": [
+    {
+      "from": "wcl",
+      "to": "base",
+      "label": "water label",
+      "variant": "dashed",
+      "route": "straight"
+    },
+    {
+      "from": "s1",
+      "to": "feat",
+      "label": "pre + event",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "feat",
+      "to": "base",
+      "label": "VV, VH",
+      "variant": "dashed"
+    },
+    {
+      "from": "feat",
+      "to": "samples",
+      "label": "pixel values",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        315,
+        380
+      ]
+    },
+    {
+      "from": "polys",
+      "to": "samples",
+      "label": "flood",
+      "variant": "emphasis",
+      "route": "vertical-channel",
+      "fromSide": "right",
+      "toSide": "left",
+      "channelX": 230,
+      "labelAt": [
+        230,
+        433
+      ]
+    },
+    {
+      "from": "hand",
+      "to": "samples",
+      "label": "area",
+      "variant": "default",
+      "route": "straight",
+      "labelAt": [
+        185,
+        490
+      ]
+    },
+    {
+      "from": "perm",
+      "to": "samples",
+      "label": "exclude",
+      "variant": "default",
+      "route": "vertical-channel",
+      "fromSide": "right",
+      "toSide": "left",
+      "channelX": 230,
+      "labelAt": [
+        230,
+        547
+      ]
+    },
+    {
+      "from": "samples",
+      "to": "tune",
+      "label": "train/val",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        440,
+        490
+      ]
+    },
+    {
+      "from": "samples",
+      "to": "eval",
+      "label": "test pixels",
+      "variant": "default",
+      "route": "vertical-channel",
+      "fromSide": "right",
+      "toSide": "left",
+      "channelX": 400,
+      "labelAt": [
+        400,
+        433
+      ]
+    },
+    {
+      "from": "tune",
+      "to": "eval",
+      "label": "best RF",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        530,
+        433
+      ]
+    },
+    {
+      "from": "base",
+      "to": "eval",
+      "label": "compare",
+      "variant": "dashed",
+      "route": "straight",
+      "labelAt": [
+        530,
+        262
+      ]
+    },
+    {
+      "from": "tune",
+      "to": "ee",
+      "label": "settings",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "ee",
+      "to": "dpa",
+      "label": "flood extent",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        745,
+        547
+      ]
+    },
+    {
+      "from": "dpa",
+      "to": "map",
+      "label": "attributes",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "eval",
+      "to": "report",
+      "label": "scores",
+      "variant": "default",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Model path",
+      "items": [
+        "Polygons label flood; the rest of each box inside HAND < 10 m is dry",
+        "AOIs split: train 01, 02, 05, 06; valid 07; test 03, 04",
+        "Test is scored with and without the 40 m edge band"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Baselines",
+      "items": [
+        "WorldCover RF is trained on pre-event SAR with WorldCover water labels, training AOIs only",
+        "Otsu is a per-AOI threshold on event VV, not trained",
+        "Both flag flood as water now, not before, on flat low ground"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Map path",
+      "items": [
+        "The Earth Engine RF reuses the tuned settings region-wide",
+        "Depth = dry ground touching the flood minus LINZ ground height",
+        "WorldPop and LINZ buildings and roads attach to each polygon"
+      ]
+    }
+  ]
+}
