@@ -72,16 +72,14 @@ These scores come from the scikit-learn version used for tuning. The Earth Engin
 
 ## Performance
 
-Wall-clock timings from `latency_shap.ipynb` on Google Colab. Earth Engine runs the model server-side and is lazy, so its times include network and, for Northland, the GeoTIFF download.
+Timings from `latency_shap.ipynb` on Google Colab (one run).
 
-| Step | Time |
-|---|---|
-| scikit-learn: train Polygon RF (200 trees) | 1.2 s |
-| scikit-learn: inference on the test pixels (~12,000), median of 5 | 0.10 s (8.5 ms per 1,000 pixels) |
-| Earth Engine: train, classify the test pixels and fetch | 78.9 s |
-| Earth Engine: classify and download Northland, one pass (30 m) | 332 s (about 5.5 min) |
+| Measure | Pixels | Value |
+|---|---|---|
+| Inference, scikit-learn (local) | 12,085 (test AOIs, 20 m) | 0.10 s total (about 21 ms/km²) |
+| Inference, Earth Engine (classify + download Northland, one pass, 30 m) | about 15.3 M (derived) | 332 s total (about 24 ms/km², Northland ≈ 13,800 km²) |
 
-Only one run was timed, and Earth Engine times vary with server load. The page is static, so there is no server-side latency once the polygons are built; everything after the notebook run is client-side. Depth, exposure and export timings were not measured.
+The Earth Engine pixel count and the per-km² values are derived (≈ 13,800 km² ÷ 0.0009 km² per 30 m pixel): scikit-learn from the pixel rate, Earth Engine from an approximate external area for Northland. Earth Engine times include network and download and vary with server load.
 
 ## Alert priority
 
