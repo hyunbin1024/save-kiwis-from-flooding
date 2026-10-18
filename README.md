@@ -70,6 +70,18 @@ These scores come from the scikit-learn version used for tuning. The Earth Engin
 
 ![SHAP summary plot: each dot is a test pixel, coloured by the band's value](shap_summary.png)
 
+**What the key features mean.** Calm floodwater is smooth, so it reflects radar away from the satellite and the pixel turns dark. Values are in dB, so a drop is a negative change.
+
+| Feature | What it is | Why it matters (from the SHAP plot) |
+|---|---|---|
+| `d_VH` | Event VH minus pre-event VH | Strongest signal. A large drop (low value) means the pixel went dark between the two dates, which pushes it towards flood. |
+| `post_VH` | VH on the event pass | A low (dark) value pushes towards flood. VH is more sensitive than VV to this change here. |
+| `post_VV_VH` | Event VV minus VH | A high value (VH much darker than VV) pushes towards flood. |
+| `d_VV` | Event VV minus pre-event VV | Same idea as `d_VH` but weaker: a drop pushes towards flood. |
+| `slope` | Terrain slope | Steep ground pushes towards dry, since water pools on flat land. |
+
+`hand` and `elev` (height above drainage and elevation) have smaller effects, mostly pushing high ground towards dry. The pre-event bands matter little on their own; their information is already in the change bands. SHAP shows what the model relies on, not cause and effect, and importance is measured against the same unverified reference polygons as the accuracy scores.
+
 ## Performance
 
 Timings from `latency_shap.ipynb` on Google Colab (one run).
