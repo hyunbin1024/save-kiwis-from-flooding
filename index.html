@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flood Response Control Tower · Northland</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#0b1220;--panel:#111a2e;--panel2:#162239;--line:#24324f;--text:#e6ecf7;--mute:#8fa0bf;--accent:#4da3ff;
+--crit:#ef4444;--high:#f59e0b;--mod:#eab308;--low:#64748b;--ok:#22c55e}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:grid;grid-template-rows:auto auto auto 1fr;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:#08101f;border-bottom:2px solid var(--accent)}
+.badge{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#06101f;display:grid;place-items:center;font-weight:800}
+header h1{font-size:16px;margin:0;letter-spacing:.06em;text-transform:uppercase}
+header small{color:var(--mute);display:block;font-size:12px}
+.sp{flex:1}
+.pill{border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--panel);font-size:12px}
+.pill b{color:var(--high)}
+.hbtn{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 12px}
+.hbtn:hover{border-color:var(--accent)}
+.banner{background:#3a2a06;color:#fcd68a;font-size:12px;padding:5px 18px;border-bottom:1px solid #5b430c}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.kpi{background:var(--panel);padding:8px 18px}
+.kpi span{display:block;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.kpi b{font-size:22px;font-variant-numeric:tabular-nums}
+.kpi i{font-style:normal;color:var(--mute);font-size:12px;margin-left:4px}
+.kpi.crit b{color:var(--crit)}
+main{display:grid;grid-template-columns:360px 1fr 340px;min-height:0}
+aside{background:var(--panel);display:flex;flex-direction:column;min-height:0}
+#left{border-right:1px solid var(--line)}#right{border-left:1px solid var(--line)}
+.ph{padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);display:flex;justify-content:space-between;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 0}
+.chip{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:3px 10px;font-size:12px}
+.chip[aria-pressed=true]{border-color:currentColor;background:#0b1220}
+.tools{display:flex;gap:6px;padding:10px 14px}
+.tools{flex-wrap:wrap}.tools input{flex:1 1 100%}.tools select{flex:1;min-width:0}
+.tools input,.tools select{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 8px;font:inherit}
+#list{overflow:auto;flex:1;margin:0;padding:0;list-style:none}
+#list li{display:grid;grid-template-columns:6px 1fr auto;gap:10px;padding:9px 14px 9px 0;border-bottom:1px solid var(--line);cursor:pointer}
+#list li:hover,#list li.sel{background:var(--panel2)}
+#list li.sel{box-shadow:inset 2px 0 var(--accent)}
+.bar{border-radius:0 3px 3px 0}
+.t{font-weight:600}.m{color:var(--mute);font-size:12px}
+.st{font-size:11px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;align-self:start;color:var(--mute)}
+.st.Acknowledged{color:var(--accent)}.st.Dispatched{color:var(--high)}.st.Resolved{color:var(--ok)}
+#map{background:#0a0f1a}
+.leaflet-container{font:inherit}
+.lg{background:rgba(17,26,46,.92);color:var(--text);padding:8px 10px;border-radius:6px;border:1px solid var(--line);font-size:12px}
+.lg div{display:flex;align-items:center;gap:6px;margin:2px 0}.lg s{width:12px;height:12px;border-radius:2px;display:inline-block}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+#passes button{display:flex;flex-direction:column;align-items:center;line-height:1.15;padding:4px 14px}
+#passes small{font-size:10px;color:inherit;opacity:.75;letter-spacing:.04em;text-transform:uppercase}
+.seg button{background:none;border:0;padding:5px 10px;font-size:12px}.seg button[aria-pressed=true]{background:var(--accent);color:#06101f;font-weight:700}
+#detail{overflow:auto;flex:1;padding:14px}
+.empty{color:var(--mute);padding:30px 10px;text-align:center}
+.lvl{display:inline-block;padding:2px 10px;border-radius:4px;font-weight:700;font-size:12px;color:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.cell{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.cell span{display:block;color:var(--mute);font-size:11px;text-transform:uppercase}.cell b{font-size:18px}
+.tag{display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);font-size:12px;color:var(--mute)}.tag.named{color:#fff;background:#7f1d1d;border-color:var(--crit)}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:16px 0 6px}
+#acts{margin:0;padding:0;list-style:none}
+#acts li{display:flex;gap:8px;padding:5px 0}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.flow button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 2px;font-size:11.5px}
+.flow button[aria-pressed=true]{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:700}
+.links{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.links a,.links button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;color:var(--text);text-decoration:none;font-size:12px}
+.links a:hover,.links button:hover{border-color:var(--accent)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;max-width:640px;width:92vw;padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+table{border-collapse:collapse;width:100%;margin:8px 0}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
+dialog p,dialog li{color:#b9c6de;font-size:13px}
+@media (max-width:980px){
+ body{overflow:auto;display:block}.kpis{grid-template-columns:repeat(3,1fr)}
+ main{display:block}#map{height:55vh}#list{max-height:50vh}#right{border:0}header small{display:none}.pill{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="badge" aria-hidden="true">FR</div>
+  <div><h1>Flood Response Control Tower</h1><small>Northland · Sentinel-1 flood extent · GEOG761 Group 05</small></div>
+  <div class="sp"></div>
+  <div class="seg" id="passes" role="group" aria-label="Sentinel-1 pass date"></div>
+  <button class="hbtn" id="about">Method &amp; accuracy</button>
+</header>
+<div class="banner" id="banner" role="note">Retrospective analysis of a past event, not a live feed. Flood extent is a Sentinel-1 model estimate checked only against unverified reference polygons: confirm on the ground before acting.</div>
+<section class="kpis" id="kpis" aria-label="Summary"></section>
+<main>
+  <aside id="left" aria-label="Alert queue">
+    <div class="ph"><span>Alert queue</span><span id="count"></span></div>
+    <div class="chips" id="chips"></div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Search alert ID (e.g. 412)" aria-label="Search alert ID">
+      <select id="so" aria-label="Sort by"><option value="ls">Sort: Life safety</option><option value="in">Sort: Infrastructure</option><option value="hz">Sort: Hazard depth</option></select>
+      <select id="sf" aria-label="Status filter"><option value="">All status</option><option>New</option><option>Acknowledged</option><option>Dispatched</option><option>Resolved</option></select>
+    </div>
+    <ul id="list"></ul>
+  </aside>
+  <div id="map" role="application" aria-label="Flood map"></div>
+  <aside id="right" aria-label="Incident detail">
+    <div class="ph"><span>Incident detail</span></div>
+    <div id="detail"><div class="empty">Select an alert or a flood polygon on the map to inspect it.</div></div>
+  </aside>
+</main>
+
+<dialog id="dlg">
+  <h2 style="margin-top:0">Method &amp; accuracy</h2>
+  <h3>Model used for this map</h3>
+  <p><b>Polygon RF.</b> A Random Forest (Earth Engine <code>smileRandomForest</code>, probability mode, 200 trees, minimum leaf size 5). A pixel is flood if its probability is 0.425 or higher. It is trained on the reference flood polygons of AOIs 01, 02, 05 and 06.</p>
+  <p><b>Inputs (11 bands):</b> Sentinel-1 VV, VH and VV−VH for the selected pass and for a pre-event median from the same orbit; the change in VV and VH; elevation, slope and HAND (height above nearest drainage). Output is masked to floodable ground (HAND below the cut-off, not permanent water), and very small patches are dropped.</p>
+  <p><b>Depth</b> is a separate bathtub estimate on the LINZ LiDAR DEM, not part of the Random Forest.</p>
+  <h3>Dates (Sentinel-1 passes)</h3>
+  <table id="pt"><thead><tr><th>Pass</th><th>UTC</th><th>Orbit</th><th>Scenes</th><th>Model</th></tr></thead><tbody></tbody></table>
+  <p>The model was trained on the 14 Feb pass (orbit 81) only. The other dates use different orbits and viewing angles, so their maps are <b>unvalidated</b> and have no reference polygons. Single-scene passes likely cover only part of Northland, so their totals are not comparable with the event pass. Sentinel-1 passes over Northland on 12 and 13 Feb do not exist, so the build-up to the peak cannot be shown.</p>
+  <h3>Accuracy on held-out test AOIs 03 and 04 (event pass)</h3>
+  <table id="mt"><thead><tr><th>Method</th><th>Precision</th><th>Recall</th><th>F1</th><th>IoU</th></tr></thead><tbody></tbody></table>
+  <p>Scores come from the scikit-learn version of the Polygon RF used for tuning. The Earth Engine version that made the map scored almost the same (test average precision 0.954 vs 0.952). WorldCover RF and Otsu are baselines for comparison only; <b>they are not shown on this map</b>.</p>
+  <p><b>Read with care.</b> The reference polygons come from an external, unverified source and were made from the same Sentinel-1 pass, so these scores measure agreement with the reference method, not independent accuracy. SAR under-detects flooding in built-up areas and under vegetation. Population is WorldPop 2020 (approx.); buildings and roads are LINZ. Depth is a bathtub estimate on the LINZ LiDAR DEM.</p>
+  <p><b>Priority rules.</b> Critical: school or named critical use, or ≥ 10 buildings, or ≥ 25 people. High: ≥ 3 buildings, ≥ 5 people or ≥ 1 km road. Moderate: any building or road. Low: none. Status changes are saved in this browser only.</p>
+  <form method="dialog"><button class="hbtn">Close</button></form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="flood-data.js"></script>
+<script src="multiday-data.js"></script>
+<script>
+const $=s=>document.querySelector(s), fmt=(n,d=0)=>Number(n).toLocaleString('en-NZ',{maximumFractionDigits:d});
+const LV=[["Critical","#ef4444"],["High","#f59e0b"],["Moderate","#eab308"],["Low","#64748b"]], COL=Object.fromEntries(LV);
+const STATUS=["New","Acknowledged","Dispatched","Resolved"];
+
+// ponytail: rule-based priority from exposure counts, tune thresholds here (and in the dialog text)
+const level=f=>f.u||f.b>=10||f.p>=25?"Critical":f.b>=3||f.p>=5||f.r>=1?"High":f.b>=1||f.r>0?"Moderate":"Low";
+const score=f=>(f.u?100:0)+f.p+2*f.b+3*f.r+2*f.dx;
+
+// Sentinel-1 passes over Northland (ids match data/ files). Only the event pass matches the model's training orbit.
+const EVENT="2023-02-14_o81";
+const PASS=[
+ {id:"2023-02-11_o44",day:"11 Feb",role:"Before",utc:"11 Feb 2023, 17:45 UTC",orbit:44,dir:"descending",scenes:1},
+ {id:EVENT,day:"14 Feb",role:"Event",utc:"14 Feb 2023, 07:08 UTC",orbit:81,dir:"ascending",scenes:2},
+ {id:"2023-02-18_o146",day:"18 Feb",role:"After",utc:"18 Feb 2023, 17:37 UTC",orbit:146,dir:"descending",scenes:1},
+ {id:"2023-02-19_o154",day:"19 Feb",role:"After",utc:"19 Feb 2023, 07:16 UTC",orbit:154,dir:"ascending",scenes:2}];
+const ROWS={...window.PASS_ROWS,[EVENT]:window.FLOODS}, ST=window.PASS_STATS, M=window.META;
+const BANNER="Retrospective analysis of a past event, not a live feed. Flood extent is a Sentinel-1 model estimate checked only against unverified reference polygons: confirm on the ground before acting.";
+
+let cur, F=[], byId={}, sel=null, mode="priority", layers={};
+let saved={}; try{saved=JSON.parse(localStorage.getItem("frct")||"{}")}catch(e){}
+const key=f=>cur.id+":"+f.id, status=f=>saved[key(f)]||"New";   // alert ids differ per pass, so status is kept per pass
+const setStatus=(f,s)=>{saved[key(f)]=s;try{localStorage.setItem("frct",JSON.stringify(saved))}catch(e){}refresh();show(f,false)};
+
+// map
+const map=L.map("map",{preferCanvas:true,zoomControl:true}).setView([-35.6,173.9],9);
+const dark=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",{attribution:"Tiles © Esri",maxZoom:16}).addTo(map);
+const sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{attribution:"Imagery © Esri",maxZoom:19});
+L.control.layers({"Dark":dark,"Satellite":sat},null,{position:"topright"}).addTo(map);
+
+const ramp=d=>d<.5?"#9ecae1":d<1?"#6baed6":d<2?"#3182bd":d<3?"#08519c":"#08306b";
+const colour=f=>mode==="priority"?COL[f.lv]:ramp(f.dm);
+const base=f=>({color:colour(f),weight:f.lv==="Low"?.6:1.5,fillColor:colour(f),fillOpacity:.55});
+const polys=L.layerGroup().addTo(map);
+const Seg=L.control({position:"topleft"});
+Seg.onAdd=()=>{const d=L.DomUtil.create("div","seg");d.innerHTML='<button aria-pressed="true" data-m="priority">Priority</button><button aria-pressed="false" data-m="depth">Depth</button>';
+ L.DomEvent.disableClickPropagation(d);d.onclick=e=>{const m=e.target.dataset.m;if(!m)return;mode=m;d.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===m));
+ F.forEach(f=>layers[f.id].setStyle(base(f)));legend();if(sel)layers[sel.id].setStyle({weight:4,color:"#fff"})};return d};
+Seg.addTo(map);
+const Lg=L.control({position:"bottomleft"});Lg.onAdd=()=>L.DomUtil.create("div","lg");Lg.addTo(map);
+function legend(){const items=mode==="priority"?LV.map(l=>[l[0],l[1]]):[["< 0.5 m","#9ecae1"],["0.5–1 m","#6baed6"],["1–2 m","#3182bd"],["2–3 m","#08519c"],["> 3 m","#08306b"]];
+ document.querySelector(".lg").innerHTML=`<b>${mode==="priority"?"Alert priority":"Mean depth"}</b>`+items.map(i=>`<div><s style="background:${i[1]}"></s>${i[0]}</div>`).join("")}
+legend();
+
+// list
+let fl=new Set(LV.map(l=>l[0]));
+function chips(){$("#chips").innerHTML=LV.map(([n,c])=>`<button class="chip" style="color:${c}" aria-pressed="${fl.has(n)}" data-l="${n}">${n} <b>${F.filter(f=>f.lv===n).length}</b></button>`).join("")}
+$("#chips").onclick=e=>{const n=e.target.closest(".chip")?.dataset.l;if(!n)return;fl.has(n)?fl.delete(n):fl.add(n);e.target.closest(".chip").setAttribute("aria-pressed",fl.has(n));refresh()};
+$("#q").oninput=$("#sf").onchange=$("#so").onchange=()=>refresh();
+function filtered(){const q=$("#q").value.trim(),s=$("#sf").value,k=$("#so").value;
+ return F.filter(f=>fl.has(f.lv)&&(!q||String(f.id).includes(q))&&(!s||status(f)===s)).sort((a,b)=>b[k]-a[k]||b.s-a.s)}
+function refresh(){
+  const r=filtered();$("#count").textContent=fmt(r.length)+" shown";
+  $("#list").innerHTML=r.slice(0,300).map(f=>`<li data-id="${f.id}" tabindex="0" class="${sel&&sel.id===f.id?"sel":""}"><div class="bar" style="background:${COL[f.lv]}"></div>
+   <div><div class="t">#${f.id} · ${f.lv}${f.u?" · "+f.u:""}</div><div class="m">${fmt(f.p)} people · ${f.b} bldgs · ${f.r} km road · ${f.dx} m max depth</div></div><span class="st ${status(f)}">${status(f)}</span></li>`).join("")+
+   (r.length>300?`<li style="display:block;color:var(--mute);cursor:default">Top 300 shown: narrow the filters to see more.</li>`:"");
+}
+$("#list").onclick=e=>{const li=e.target.closest("li[data-id]");if(li)show(byId[li.dataset.id],true)};
+$("#list").onkeydown=e=>{if(e.key==="Enter"){const li=e.target.closest("li[data-id]");if(li)show(byId[li.dataset.id],true)}};
+
+// detail
+function actions(f){
+ const a=[];
+ if(f.u)a.push(`Confirm status and occupancy of named facility (${f.u}); arrange welfare check.`);
+ if(f.p>=25)a.push(`Dispatch evacuation and welfare teams: about ${fmt(f.p)} people exposed.`);
+ else if(f.p>=1)a.push(`Door-knock check for about ${fmt(f.p)} people in the footprint.`);
+ if(f.dx>=2)a.push(`Deep water (up to ${f.dx} m): swift-water rescue capable crews only.`);
+ if(f.r>=1)a.push(`Close or re-route ${f.r} km of road; notify the roading authority.`);
+ if(f.b>=1)a.push(`Ground-truth ${f.b} flooded building${f.b>1?"s":""} for damage assessment.`);
+ a.push("Verify extent with aerial or optical imagery: SAR can miss urban and under-canopy flooding.");
+ return a}
+function types(f){   // LINZ only names a use for a few buildings; the rest are "Unknown", and per-type counts per polygon aren't in the data
+  if(!f.b)return '<div class="m">No buildings in this flood area.</div>';
+  const t=(f.u?f.u.split(", "):[]).map(u=>`<span class="tag named">${u}</span>`).join("");
+  return `<div>${t}<span class="tag">Unclassified</span></div><div class="m" style="margin-top:4px">${f.u?"Named use(s) are critical facilities; the other buildings":"All buildings"} have no use recorded in LINZ.</div>`}
+function show(f,zoom){
+  if(sel&&layers[sel.id])layers[sel.id].setStyle(base(sel));
+  sel=f;layers[f.id].setStyle({weight:4,color:"#fff"}).bringToFront();
+  if(zoom)map.fitBounds(layers[f.id].getBounds(),{maxZoom:16,padding:[60,60]});
+  const c=layers[f.id].getBounds().getCenter(),ll=`${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`,s=status(f);
+  $("#detail").innerHTML=`<span class="lvl" style="background:${COL[f.lv]}">${f.lv.toUpperCase()}</span> <b style="font-size:16px">Alert #${f.id}</b> <span class="m">· ${cur.day}</span>
+  <div class="grid2"><div class="cell"><span>Area</span><b>${fmt(f.a,1)} ha</b></div><div class="cell"><span>Depth mean / max</span><b>${f.dm} / ${f.dx} m</b></div>
+  <div class="cell"><span>People (approx.)</span><b>${fmt(f.p)}</b></div><div class="cell"><span>Buildings</span><b>${f.b}</b></div>
+  <div class="cell" style="grid-column:span 2"><span>Road in flood</span><b>${f.r} km</b></div></div>
+  <h3>Building types (${f.b})</h3>${types(f)}
+  <h3>Recommended actions</h3><ul id="acts">${actions(f).map(x=>`<li><input type="checkbox" aria-label="done"><span>${x}</span></li>`).join("")}</ul>
+  <h3>Status</h3><div class="flow">${STATUS.map(x=>`<button aria-pressed="${x===s}" data-s="${x}">${x}</button>`).join("")}</div>
+  <div class="links"><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">Navigate</a>
+  <button id="cp">Copy ${ll}</button></div>`;
+  $("#detail .flow").onclick=e=>{const x=e.target.dataset.s;if(x)setStatus(f,x)};
+  $("#cp").onclick=e=>{navigator.clipboard?.writeText(ll);e.target.textContent="Copied"};
+  document.querySelectorAll("#list li.sel").forEach(li=>li.classList.remove("sel"));
+  document.querySelector(`#list li[data-id="${f.id}"]`)?.classList.add("sel");
+}
+
+// dialog
+$("#mt tbody").innerHTML=Object.entries(M.metrics).map(([k,v])=>{const used=k==="Polygon RF";
+ return `<tr${used?' style="background:var(--panel2)"':""}><td>${k}<br><span class="m">${used?"used on this map":"baseline, not on map"}</span></td>${v.map(x=>`<td>${x.toFixed(3)}</td>`).join("")}</tr>`}).join("");
+$("#about").onclick=()=>$("#dlg").showModal();
+$("#pt tbody").innerHTML=PASS.map(p=>`<tr><td>${p.day} · ${p.role}</td><td>${p.utc.split(", ")[1]}</td><td>${p.orbit} ${p.dir}</td><td>${p.scenes}</td><td>${p.id===EVENT?"training orbit":"unvalidated"}</td></tr>`).join("");
+
+// pass selector: everything that depends on the data is rebuilt here
+function load(p){
+  cur=p;sel=null;
+  F=ROWS[p.id];
+  if(F[0].lv===undefined)F.forEach(f=>{f.lv=level(f);f.s=score(f);f.ls=f.p+(f.u?100:0);f.in=f.b+5*f.r;f.hz=f.dx});   // sort keys: who to rescue, what to repair/close, where crews need special gear
+  F.sort((a,b)=>b.s-a.s);
+  byId=Object.fromEntries(F.map(f=>[f.id,f]));
+  const s=ST[p.id];
+  $("#kpis").innerHTML=[
+   ["Critical alerts",F.filter(f=>f.lv==="Critical").length,"of "+fmt(s.polygons),"crit"],["Flooded area",fmt(s.flood_km2,1),"km²"],["People exposed",fmt(s.people),"approx."],
+   ["Buildings in flood",fmt(s.buildings),"of "+fmt(M.buildings_total)],["Roads affected",fmt(s.roads_km,1),"km of "+fmt(M.roads_total)],
+   ["Depth p95",fmt(s.depth_p95_m,1),"m (mean "+s.depth_mean_m+")"]
+  ].map(k=>`<div class="kpi ${k[3]||""}"><span>${k[0]}</span><b>${k[1]}</b><i>${k[2]}</i></div>`).join("");
+  $("#banner").textContent=p.id===EVENT?BANNER:
+   `Not the event pass: ${p.utc}, orbit ${p.orbit} ${p.dir}, ${p.scenes} scene${p.scenes>1?"s":""}${p.scenes<2?" (likely partial coverage of Northland)":""}. The model was trained on orbit 81 only, so this map is unvalidated and has no reference to check it against. ${p.role==="After"?"It shows water remaining after the event, not new flooding.":"It was taken before the event pass, so it shows water already present."}`;
+  document.querySelectorAll("#passes button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===p.id));
+  polys.clearLayers();layers={};
+  F.slice().reverse().forEach(f=>{   // critical drawn last = on top
+    const l=L.geoJSON({type:"Feature",geometry:{type:f.g,coordinates:f.c}},{style:()=>base(f)});
+    l.on("click",()=>show(f,false));l.bindTooltip(`#${f.id} · ${f.lv} · ${f.dm} m mean depth`,{sticky:true});
+    layers[f.id]=l;polys.addLayer(l);
+  });
+  $("#detail").innerHTML='<div class="empty">Select an alert or a flood polygon on the map to inspect it.</div>';
+  chips();refresh();
+  map.fitBounds(polys.getLayers().length?L.featureGroup(polys.getLayers()).getBounds():[[-36.4,172.7],[-34.4,174.6]]);
+}
+$("#passes").innerHTML=PASS.map(p=>`<button data-id="${p.id}" aria-pressed="false" title="${p.utc} · orbit ${p.orbit} ${p.dir}"><b>${p.day}</b><small>${p.role}</small></button>`).join("");
+$("#passes").onclick=e=>{const b=e.target.closest("button");if(b)load(PASS.find(p=>p.id===b.dataset.id))};
+load(PASS.find(p=>p.id===EVENT));
+</script>
+</body>
+</html>
