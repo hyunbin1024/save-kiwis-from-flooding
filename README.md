@@ -52,6 +52,37 @@ Open `index.html` in a browser. No build step and no server are needed.
 
 These scores come from the scikit-learn version used for tuning. The Earth Engine version that made the map scored almost the same (test average precision 0.954 vs 0.952).
 
+- **Feature importance (SHAP):** mean absolute SHAP value of each band on the flood probability, for the scikit-learn Polygon RF on a test-pixel sample (up to 2,000). The change in VH backscatter dominates: a large drop in VH (low `d_VH`) and a low event VH push the model towards flood. The pre-event bands add almost nothing on their own, since the change bands already carry that information.
+
+| Rank | Band | Mean abs SHAP |
+|---|---|---|
+| 1 | d_VH | 0.265 |
+| 2 | post_VH | 0.127 |
+| 3 | post_VV_VH | 0.050 |
+| 4 | d_VV | 0.029 |
+| 5 | slope | 0.023 |
+| 6 | post_VV | 0.016 |
+| 7 | hand | 0.007 |
+| 8 | elev | 0.004 |
+| 9 | pre_VV | 0.002 |
+| 10 | pre_VH | 0.002 |
+| 11 | pre_VV_VH | 0.0004 |
+
+![SHAP summary plot: each dot is a test pixel, coloured by the band's value](shap_summary.png)
+
+## Performance
+
+Wall-clock timings from `latency_shap.ipynb` on Google Colab. Earth Engine runs the model server-side and is lazy, so its times include network and, for Northland, the GeoTIFF download.
+
+| Step | Time |
+|---|---|
+| scikit-learn: train Polygon RF (200 trees) | 1.2 s |
+| scikit-learn: inference on the test pixels (~12,000), median of 5 | 0.10 s (8.5 ms per 1,000 pixels) |
+| Earth Engine: train, classify the test pixels and fetch | 78.9 s |
+| Earth Engine: classify and download Northland, one pass (30 m) | 332 s (about 5.5 min) |
+
+Only one run was timed, and Earth Engine times vary with server load. The page is static, so there is no server-side latency once the polygons are built; everything after the notebook run is client-side. Depth, exposure and export timings were not measured.
+
 ## Alert priority
 
 Rule-based on exposure counts (not a model). The first rule that matches decides it:
