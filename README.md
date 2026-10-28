@@ -127,7 +127,7 @@ Thresholds are set in the `level` function in `index.html`. Alert status is save
 
 ## Limitations
 
-- The team digitised the reference polygons on the same Sentinel-1 pass the model uses, and nobody checked them in the field. The accuracy figures measure agreement with that reference, not independent accuracy.
+- The team digitised the reference polygons on the same Sentinel-1 pass the model uses, with the SWA Cyclone Gabrielle Impact Map (made by Dragonfly, from Sentinel-2 images; https://d1econosvb0ksc.cloudfront.net/) as a guide. Nobody checked the polygons in the field. The accuracy figures measure agreement with that reference, not independent accuracy.
 - The model was trained on the 14 Feb pass (orbit 81) only. The other dates use different orbits and viewing angles, so those maps are unvalidated and have no reference. Single-scene passes (11 and 18 Feb) likely cover only part of Northland, so their totals are not comparable with the event pass.
 - There is no Sentinel-1 pass over Northland on 12 or 13 Feb, so the build-up to the peak cannot be shown. The 18 and 19 Feb maps show water remaining after the event, not new flooding.
 - SAR under-detects flooding in built-up areas and under vegetation.
@@ -147,7 +147,8 @@ Thresholds are set in the `level` function in `index.html`. Alert status is save
 | Population | WorldPop 2020, 100 m |
 | Buildings | LINZ NZ Building Outlines |
 | Roads | LINZ NZ Road Centrelines (Topo 1:50k) |
-| Flood reference polygons | Team-digitised (Group 05), not field-verified; used for training and testing only; not in this repository |
+| Flood reference polygons | Team-digitised (Group 05) with the SWA Cyclone Gabrielle Impact Map as a guide; not field-verified; used for training and testing only; not in this repository |
+| SWA Cyclone Gabrielle Impact Map | Made by Dragonfly from Sentinel-2 images; https://d1econosvb0ksc.cloudfront.net/; used as a guide when digitising |
 | Basemap | Esri World Dark Gray Base and World Imagery |
 
 ## Updating the data
