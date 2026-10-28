@@ -120,7 +120,7 @@ dialog p,dialog li{color:#b9c6de;font-size:13px}
   <h3>Accuracy on held-out test AOIs 03 and 04 (event pass)</h3>
   <table id="mt"><thead><tr><th>Method</th><th>Precision</th><th>Recall</th><th>F1</th><th>IoU</th></tr></thead><tbody></tbody></table>
   <p>Scores come from the scikit-learn version of the Polygon RF used for tuning. The Earth Engine version that made the map scored almost the same (test average precision 0.954 vs 0.952). WorldCover RF and Otsu are baselines for comparison only; <b>they are not shown on this map</b>.</p>
-  <p><b>Read with care.</b> The reference polygons come from an external, unverified source and were made from the same Sentinel-1 pass, so these scores measure agreement with the reference method, not independent accuracy. SAR under-detects flooding in built-up areas and under vegetation. Population is WorldPop 2020 (approx.); buildings and roads are LINZ. Depth is a bathtub estimate on the LINZ LiDAR DEM.</p>
+  <p><b>Read with care.</b> The reference polygons were digitised by the team on the same Sentinel-1 pass and are not field-verified, so these scores measure agreement with the team's interpretation, not independent accuracy. SAR under-detects flooding in built-up areas and under vegetation. Population is WorldPop 2020 (approx.); buildings and roads are LINZ. Depth is a bathtub estimate on the LINZ LiDAR DEM.</p>
   <p><b>Priority rules.</b> Critical: school or named critical use, or ≥ 10 buildings, or ≥ 25 people. High: ≥ 3 buildings, ≥ 5 people or ≥ 1 km road. Moderate: any building or road. Low: none. Status changes are saved in this browser only.</p>
   <form method="dialog"><button class="hbtn">Close</button></form>
 </dialog>

@@ -16,10 +16,13 @@ A static, interactive map for exploring flood extent and exposure in Northland, 
 
 | File | What it is |
 |---|---|
-| `index.html` | The page and all its code |
+| `index.html` | The dashboard page and all its code |
 | `flood-data.js` | Summary figures and the 14 Feb event polygons |
 | `multiday-data.js` | The 11, 18 and 19 Feb polygons and per-date totals |
-| `data/` | Source files the `.js` files were built from (not loaded by the page; optional) |
+| `notebooks/flood_data_pipeline.ipynb` | Downloads the LINZ LiDAR DEM, WorldPop, LINZ building outlines and road centrelines for Northland |
+| `notebooks/flood_event_pipeline.ipynb` | Trains and tests the flood model, maps Northland, calculates depth and exposure, and runs the extra passes |
+| `notebooks/latency_shap.ipynb` | Times inference and computes SHAP feature importance |
+| `pipeline.png`, `shap_summary.png` | Figures used below |
 
 Leaflet and the Esri map tiles load from the internet.
 
@@ -29,15 +32,29 @@ Open `index.html` in a browser. No build step and no server are needed.
 
 **Host on GitHub Pages:** put `index.html`, `flood-data.js` and `multiday-data.js` in the same folder of a repo, then go to Settings → Pages and publish that folder.
 
+## Reproduce it
+
+The notebooks run in Google Colab with Google Drive mounted. Run them in this order:
+
+1. `flood_data_pipeline.ipynb`: downloads the exposure and depth layers to Drive.
+2. `flood_event_pipeline.ipynb`: trains, tests and maps the flood, then writes the dashboard JSON files.
+3. `latency_shap.ipynb` (optional): timings and SHAP.
+
+You need:
+
+- A Google Earth Engine account and Cloud project. Set `EE_PROJECT` in the setup cell to your own project ID.
+- A free LINZ Data Service API key, stored as the Colab secret `LINZ_API_KEY`. No key is stored in this repository.
+- The reference flood polygons for AOIs 01–07 in `data/test`. The team digitised them; they are not in this repository. Ask the team for a copy.
+
 ## Pipeline
 
 ![End-to-end pipeline: sources, prepare, train and evaluate, map Northland, outputs](pipeline.png)
 
-*The diagram shows the single-event pipeline (14 Feb pass). The other dates reuse the trained model; see Limitations.*
+*Stages 1–3 use the 14 Feb 2023 event pass. Stage 4 applies the trained model to Northland for the event pass and for the 11, 18 and 19 Feb passes; see Limitations.*
 
 ## Method
 
-- **Model:** Polygon RF, a Random Forest (Earth Engine `smileRandomForest`, probability mode, 200 trees, minimum leaf size 5). A pixel is flood if its probability is 0.425 or higher. It is trained on reference flood polygons from AOIs 01, 02, 05 and 06.
+- **Model:** Polygon RF, a Random Forest (Earth Engine `smileRandomForest`, probability mode, 200 trees, minimum leaf size 5). A pixel is flood if its probability is 0.425 or higher. It is trained on team-digitised reference flood polygons from AOIs 01, 02, 05 and 06 (validation AOI 07, test AOIs 03 and 04).
 - **Inputs (11 bands):** Sentinel-1 VV, VH and VV−VH for the pass and for a pre-event median from the same orbit; the change in VV and VH; elevation, slope and HAND (height above nearest drainage).
 - **Study area:** floodable ground only (HAND below the cut-off, not permanent water). Very small patches are dropped. Output is at 30 m.
 - **Depth:** a bathtub estimate on the LINZ LiDAR DEM. It is not part of the Random Forest.
@@ -86,12 +103,14 @@ These scores come from the scikit-learn version used for tuning. The Earth Engin
 
 Timings from `latency_shap.ipynb` on Google Colab (one run).
 
-| Measure | Pixels | Value |
-|---|---|---|
-| Inference, scikit-learn (local) | 12,085 (test AOIs, 20 m) | 0.10 s total (about 21 ms/km²) |
-| Inference, Earth Engine (classify + download Northland, one pass, 30 m) | about 15.3 M (derived) | 332 s total (about 24 ms/km², Northland ≈ 13,800 km²) |
+| Measure | Value |
+|---|---|
+| scikit-learn training (4,000 pixels) | 1.2 s |
+| scikit-learn inference, 12,085 test pixels (median of 5) | 0.102 s (8.5 ms per 1,000 pixels) |
+| Earth Engine train + classify test pixels + fetch | 78.9 s |
+| Earth Engine classify + download, all of Northland, one pass, 30 m | 331.8 s |
 
-The Earth Engine pixel count and the per-km² values are derived (≈ 13,800 km² ÷ 0.0009 km² per 30 m pixel): scikit-learn from the pixel rate, Earth Engine from an approximate external area for Northland. Earth Engine times include network and download and vary with server load.
+Earth Engine times include network and download time, and change with server load. They do not include the delay before a new Sentinel-1 scene is available in Earth Engine.
 
 ## Alert priority
 
@@ -108,7 +127,7 @@ Thresholds are set in the `level` function in `index.html`. Alert status is save
 
 ## Limitations
 
-- The reference polygons come from an external, unverified source and were made from the same Sentinel-1 pass the model uses. The accuracy figures measure agreement with that reference, not independent accuracy.
+- The team digitised the reference polygons on the same Sentinel-1 pass the model uses, and nobody checked them in the field. The accuracy figures measure agreement with that reference, not independent accuracy.
 - The model was trained on the 14 Feb pass (orbit 81) only. The other dates use different orbits and viewing angles, so those maps are unvalidated and have no reference. Single-scene passes (11 and 18 Feb) likely cover only part of Northland, so their totals are not comparable with the event pass.
 - There is no Sentinel-1 pass over Northland on 12 or 13 Feb, so the build-up to the peak cannot be shown. The 18 and 19 Feb maps show water remaining after the event, not new flooding.
 - SAR under-detects flooding in built-up areas and under vegetation.
@@ -128,7 +147,7 @@ Thresholds are set in the `level` function in `index.html`. Alert status is save
 | Population | WorldPop 2020, 100 m |
 | Buildings | LINZ NZ Building Outlines |
 | Roads | LINZ NZ Road Centrelines (Topo 1:50k) |
-| Flood reference polygons | External source (unverified), used for training and testing only |
+| Flood reference polygons | Team-digitised (Group 05), not field-verified; used for training and testing only; not in this repository |
 | Basemap | Esri World Dark Gray Base and World Imagery |
 
 ## Updating the data
